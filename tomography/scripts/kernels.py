@@ -5,13 +5,13 @@ import cupy as cp
 def utils_point(resolution, n_row, n_col):
     util_preamble = string.Template(
         '''
-        __device__ int getIndexLine(float16 x, float16 center)
+        __device__ int getIndexLine(float x, float center)
         {
             int i = round((x - center) / ${resolution});
             return i;
         }
 
-        __device__ int getIndexMap_1d(float16 x, float16 y, float16 cx, float16 cy)
+        __device__ int getIndexMap_1d(float x, float y, float cx, float cy)
         {
             // Return 1D index of a point (x, y) in a layer
             int idx_x = getIndexLine(x, cx) + ${n_row} / 2;
@@ -98,21 +98,21 @@ def utils_map(n_row, n_col):
 
 def tomographyKernel(resolution, n_row, n_col, n_slice, slice_h0, slice_dh):
     tomography_kernel = cp.ElementwiseKernel(
-        in_params='raw U points, raw U center',
-        out_params='raw U layers_g, raw U layers_c',
+        in_params='raw float32 points, raw float32 center',
+        out_params='raw float32 layers_g, raw float32 layers_c',
         preamble=utils_point(resolution, n_row, n_col),
         operation=string.Template(
             '''
-            U px = points[i * 3];
-            U py = points[i * 3 + 1];
-            U pz = points[i * 3 + 2];
+            float px = points[i * 3];
+            float py = points[i * 3 + 1];
+            float pz = points[i * 3 + 2];
 
             int idx = getIndexMap_1d(px, py, center[0], center[1]);
             if ( idx < 0 ) 
                 return; 
             for ( int s_idx = 0; s_idx < ${n_slice}; s_idx ++ )
             {
-                U slice = ${slice_h0} + s_idx * ${slice_dh};
+                float slice = ${slice_h0} + s_idx * ${slice_dh};
                 if ( pz <= slice )
                     atomicMaxFloat(&layers_g[getIndexBlock_1d(idx, s_idx)], pz);
                 else
@@ -135,8 +135,8 @@ def travKernel(
     interval_min, interval_free, step_cross, step_stand, standable_th, cost_barrier
     ):
     trav_kernel = cp.ElementwiseKernel(
-        in_params='raw U interval, raw U grad_mag_sq, raw U grad_mag_max',
-        out_params='raw U trav_cost',
+        in_params='raw float32 interval, raw float32 grad_mag_sq, raw float32 grad_mag_max',
+        out_params='raw float32 trav_cost',
         preamble=utils_map(n_row, n_col),
         operation=string.Template(
             '''
@@ -200,8 +200,8 @@ def travKernel(
 
 def inflationKernel(n_row, n_col, half_kernel_size):
     inflation_kernel = cp.ElementwiseKernel(
-        in_params='raw U trav_cost, raw U score_table',
-        out_params='raw U inflated_cost',
+        in_params='raw float32 trav_cost, raw float32 score_table',
+        out_params='raw float32 inflated_cost',
         preamble=utils_map(n_row, n_col),
         operation=string.Template(
             '''

@@ -11,8 +11,28 @@ from lib import a_star, ele_planner, traj_opt
 rsg_root = os.path.dirname(os.path.abspath(__file__)) + '/../..'
 
 
+def _require_supported_numpy_version():
+    if np.lib.NumpyVersion(np.__version__) >= '2.0.0':
+        raise RuntimeError(
+            'The planner native modules crash with NumPy 2.x. '
+            'Install numpy<2 in pct_env, rebuild planner/, and rerun plan.py.'
+        )
+
+
+def _validate_tomogram_pickle_compat(tomo_path):
+    if np.lib.NumpyVersion(np.__version__) < '2.0.0':
+        with open(tomo_path, 'rb') as handle:
+            if b'numpy._core' in handle.read(4096):
+                raise RuntimeError(
+                    'Tomogram pickle was generated with NumPy 2.x and cannot '
+                    'be safely loaded under NumPy 1.x. Regenerate it with '
+                    'tomography.py after downgrading numpy in pct_env.'
+                )
+
+
 class TomogramPlanner(object):
     def __init__(self, cfg):
+        _require_supported_numpy_version()
         self.cfg = cfg
 
         self.use_quintic = self.cfg.planner.use_quintic
@@ -32,7 +52,9 @@ class TomogramPlanner(object):
         self.end_idx = np.zeros(3, dtype=np.int32)
 
     def loadTomogram(self, tomo_file):
-        with open(self.tomo_dir + tomo_file + '.pickle', 'rb') as handle:
+        tomo_path = self.tomo_dir + tomo_file + '.pickle'
+        _validate_tomogram_pickle_compat(tomo_path)
+        with open(tomo_path, 'rb') as handle:
             data_dict = pickle.load(handle)
 
             tomogram = np.asarray(data_dict['data'], dtype=np.float32)

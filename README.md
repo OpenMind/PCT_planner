@@ -70,12 +70,18 @@ source pct_env/bin/activate
 ### 3. Install Python Dependencies
 
 ```bash
-pip install open3d numpy
+pip install open3d "numpy<2"
 # Install CuPy matching your CUDA version (check with: nvidia-smi)
 # CUDA 12.x:
 # pip install cupy-cuda12x
 # CUDA 13.x:
 pip install cupy-cuda13x
+```
+
+The planner native modules currently require **NumPy 1.x**. If you installed NumPy 2.x, downgrade first:
+
+```bash
+pip install "numpy==1.26.4"
 ```
 
 ## Build & Install
@@ -114,6 +120,7 @@ rviz2 -d rsc/rviz/pct_ros.rviz
 source pct_env/bin/activate
 cd tomography/scripts/
 python3 tomography.py --scene Spiral
+python3 tomography.py --scene Isaacsim
 ```
 
 - The generated tomogram is visualized as ROS2 PointCloud2 message in RViz2 and saved in **rsc/tomogram/**.
@@ -128,6 +135,10 @@ source pct_env/bin/activate
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/YOUR/DIRECTORY/TO/PCT_planner/planner/lib/3rdparty/gtsam-4.1.1/install/lib:/YOUR/DIRECTORY/TO/PCT_planner/planner/lib/build/src/common/smoothing
 cd planner/scripts/
 python3 plan.py --scene Spiral
+
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/wendy/Documents/GitHub/PCT_planner/planner/lib/3rdparty/gtsam-4.1.1/install/lib:/home/wendy/Documents/GitHub/PCT_planner/planner/lib/build/src/common/smoothing
+python3 plan.py --scene Isaacsim
 ```
 
 - The generated trajectory is visualized as ROS2 Path message in RViz2.
@@ -167,6 +178,8 @@ rviz2 -d rsc/rviz/pct_ros.rviz
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/PCT_planner/planner/lib/3rdparty/gtsam-4.1.1/install/lib:/path/to/PCT_planner/planner/lib/build/src/common/smoothing
 cd planner/scripts/
 python3 plan.py --scene Spiral
+
+python3 plan.py --scene Isaacsim
 ```
 
 ## Configuration
@@ -210,3 +223,4 @@ The number of **final layers** is automatically determined by layer simplificati
 | RViz2 shows empty topics | Start RViz2 **before** or at the same time as the publisher nodes (QoS: TRANSIENT_LOCAL) |
 | `Segmentation fault` in planner | Ensure `libcommon_smoothing.so` path is in `LD_LIBRARY_PATH` |
 | `source ~/.bashrc` deactivates venv | Re-activate with `source pct_env/bin/activate` after sourcing bashrc |
+| `Segmentation fault` or `RuntimeError` around `pickle` / `init_map` | Use `numpy==1.26.4`, rebuild `planner/`, and regenerate the tomogram pickle with `tomography.py`. Old NumPy 2 generated pickles are not safe to load in the planner. |
