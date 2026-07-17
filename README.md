@@ -138,10 +138,48 @@ python3 plan.py --scene Spiral
 
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/wendy/Documents/GitHub/PCT_planner/planner/lib/3rdparty/gtsam-4.1.1/install/lib:/home/wendy/Documents/GitHub/PCT_planner/planner/lib/build/src/common/smoothing
+cd planner/scripts/
 python3 plan.py --scene Isaacsim
 ```
 
 - The generated trajectory is visualized as ROS2 Path message in RViz2.
+
+### Live Global Planning (robot pose + RViz2 goal)
+
+`plan_global.py` subscribes to the robot's live localization (via TF `map → base_link`) as the start position and to RViz2's **"2D Goal Pose"** tool as the goal position, then publishes the planned path to `/pct_path`.
+
+```bash
+source pct_env/bin/activate
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/wendy/Documents/GitHub/PCT_planner/planner/lib/3rdparty/gtsam-4.1.1/install/lib:/home/wendy/Documents/GitHub/PCT_planner/planner/lib/build/src/common/smoothing
+cd planner/scripts/
+
+# Goal layer by index (0 = ground floor)
+python3 plan_global.py --scene Isaacsim --goal_layer 0
+
+# Goal layer by height in meters (auto-converted to layer)
+python3 plan_global.py --scene Isaacsim --goal_z 1.5
+```
+
+#### Arguments
+
+| Argument | Default | Description |
+|---|---|---|
+| `--scene` | `Isaacsim` | Scene name (selects tomogram file) |
+| `--tomo_file` | *(from scene)* | Override tomogram filename (without `.pickle`) |
+| `--goal_layer` | `0` | Goal **layer index** (0 = ground floor) |
+| `--goal_z` | *(not set)* | Goal height in **meters** — auto-converted to layer, overrides `--goal_layer` |
+| `--start_layer` | `0` | Fallback start layer if TF Z is unavailable |
+| `--start_z` | *(from TF)* | Override start height in meters instead of using TF Z |
+| `--robot_frame` | `base_link` | TF frame of the robot base |
+| `--map_frame` | `map` | TF map frame |
+| `--goal_topic` | `/goal_pose` | RViz2 "2D Goal Pose" topic |
+| `--pose_topic` | `/localization` | Fallback pose topic (`nav_msgs/Odometry` in map frame) used when TF lookup fails |
+
+#### Notes
+
+- `--goal_layer` uses a **layer index** (integer). To find how many layers your tomogram has, check the terminal output of `tomography.py` for `Num slices simp: N`.
+- `--goal_z` uses **meters** in the map frame. The node converts it to the nearest layer using `slice_h0` and `slice_dh` from the tomogram.
+- A new path is replanned every time you set a new "2D Goal Pose" in RViz2.
 
 ## License
 
