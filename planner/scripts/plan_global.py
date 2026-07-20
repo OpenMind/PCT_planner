@@ -57,7 +57,7 @@ SCENE_TOMO = {
     'Spiral':    'spiral0.3_2',
     'Building':  'building2_9',
     'Plaza':     'plaza3_10',
-    'Isaacsim':  'fast_lio_map_20260715_150306_octomap',
+    'Isaacsim':  '3dfactory',
     'Openmind':  'scans_20260708_140737_ds37',
 }
 

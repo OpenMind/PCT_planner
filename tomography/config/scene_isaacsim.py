@@ -3,7 +3,9 @@ from .scene import ScenePCD, SceneMap, SceneTrav
 
 class SceneIsaacsim():
     pcd = ScenePCD()
-    pcd.file_name = 'fast_lio_map_20260715_150306_octomap.pcd'
+    #pcd.file_name = 'fast_lio_map_20260715_150306_octomap.pcd'
+    pcd.file_name = '3dfactory.pcd'
+
 
     map = SceneMap()
     map.resolution = 0.50
