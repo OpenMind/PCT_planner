@@ -158,11 +158,13 @@ python3 plan_global.py --scene Isaacsim --goal_layer 0
 
 # Goal layer by height in meters (auto-converted to layer)
 python3 plan_global.py --scene Isaacsim --goal_z 1.5
+```
 
-
-# Tomogram & Plan together
+### Tomogram Construction & Live Global Planning (Recommended)
+```bash
+# Tomogram Construction & Plan together (Recommended)
 python3 planner_wrapper.py --scene Isaacsim --goal_layer 0
-
+rviz2 -d rsc/rviz/pct_ros_custom.rviz
 ```
 #### Arguments
 
@@ -185,44 +187,6 @@ python3 planner_wrapper.py --scene Isaacsim --goal_layer 0
 - `--goal_z` uses **meters** in the map frame. The node converts it to the nearest layer using `slice_h0` and `slice_dh` from the tomogram.
 - A new path is replanned every time you set a new "2D Goal Pose" in RViz2.
 
-## License
-
-The source code is released under [GPLv2](http://www.gnu.org/licenses/) license.
-
-For commercial use, please contact Bowen Yang [byangar@connect.ust.hk](mailto:byangar@connect.ust.hk).
-
-## Quick Start (ROS2 Humble)
-
-Open **three terminals**. In each, first run:
-
-```bash
-source ~/.bashrc
-source /path/to/PCT_planner/pct_env/bin/activate
-```
-
-### Terminal 1 — Tomogram Construction
-
-```bash
-cd tomography/scripts/
-python3 tomography.py --scene Spiral
-```
-
-### Terminal 2 — RViz2 Visualization
-
-```bash
-cd /path/to/PCT_planner
-rviz2 -d rsc/rviz/pct_ros.rviz
-```
-
-### Terminal 3 — Trajectory Planning
-
-```bash
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/PCT_planner/planner/lib/3rdparty/gtsam-4.1.1/install/lib:/path/to/PCT_planner/planner/lib/build/src/common/smoothing
-cd planner/scripts/
-python3 plan.py --scene Spiral
-
-python3 plan.py --scene Isaacsim
-```
 
 ## Configuration
 
