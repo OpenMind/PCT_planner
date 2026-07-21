@@ -158,8 +158,12 @@ python3 plan_global.py --scene Isaacsim --goal_layer 0
 
 # Goal layer by height in meters (auto-converted to layer)
 python3 plan_global.py --scene Isaacsim --goal_z 1.5
-```
 
+
+# Tomogram & Plan together
+python3 planner_wrapper.py --scene Isaacsim --goal_layer 0
+
+```
 #### Arguments
 
 | Argument | Default | Description |
