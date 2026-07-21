@@ -166,16 +166,19 @@ class TomogramPlanner(object):
         return traj_3d
     
     def _is_traversable(self, idx_2d, layer):
-        """Return True if the grid cell is traversable (has cost > 0 and < cost_barrier).
+        """Return True if the grid cell is traversable (cost < cost_barrier).
         idx_2d = [y_idx, x_idx] as returned by pos2idx.
-        trav values: 0 = unscanned, 0 < v < cost_barrier = traversable, v == cost_barrier = obstacle.
+        trav values: 0 <= v < cost_barrier = traversable, v >= cost_barrier = obstacle.
+        Note: 0.0 is a legitimate "best case" cost (flat, clear ground), not just
+        an "unscanned" sentinel — cells with no real data are excluded upstream
+        via elev_g/NaN before ever reaching this array.
         """
         y_idx, x_idx = int(round(idx_2d[0])), int(round(idx_2d[1]))
         # bounds: y_idx in [0, map_dim[1]), x_idx in [0, map_dim[0])
         if not (0 <= y_idx < self.map_dim[1] and 0 <= x_idx < self.map_dim[0]):
             return False
         v = float(self.trav[layer, x_idx, y_idx])
-        return 0.0 < v < self.cost_barrier
+        return 0.0 <= v < self.cost_barrier
 
     def _snap_to_traversable(self, idx_2d, layer, search_radius_m=5.0, label='point'):
         """
@@ -198,7 +201,7 @@ class TomogramPlanner(object):
                 ny, nx = y0 + dy, x0 + dx
                 if not (0 <= ny < self.map_dim[1] and 0 <= nx < self.map_dim[0]):
                     continue
-                if 0.0 < float(self.trav[layer, nx, ny]) < self.cost_barrier:
+                if 0.0 <= float(self.trav[layer, nx, ny]) < self.cost_barrier:
                     dist = dy * dy + dx * dx
                     if dist < best_dist:
                         best_dist = dist
@@ -230,7 +233,7 @@ class TomogramPlanner(object):
                     continue
                 if not (0 <= ny < self.map_dim[1] and 0 <= nx < self.map_dim[0]):
                     continue
-                if 0.0 < float(self.trav[layer, nx, ny]) < self.cost_barrier:
+                if 0.0 <= float(self.trav[layer, nx, ny]) < self.cost_barrier:
                     visited.add((ny, nx))
                     queue.append((ny, nx))
         if not visited:
