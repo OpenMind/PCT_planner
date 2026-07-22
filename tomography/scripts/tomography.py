@@ -65,7 +65,8 @@ class Tomography(Node):
         self.tomogram_pub = self.create_publisher(PointCloud2, tomogram_topic, latched_qos)
 
     def loadPCD(self, pcd_file):
-        pcd = o3d.io.read_point_cloud(rsg_root + "/rsc/pcd/" + pcd_file)
+        pcd_path = pcd_file if os.path.isabs(pcd_file) else rsg_root + "/rsc/pcd/" + pcd_file
+        pcd = o3d.io.read_point_cloud(pcd_path)
         points = np.asarray(pcd.points).astype(np.float32)
         self.get_logger().info('PCD points: %d' % points.shape[0])
 
@@ -123,7 +124,7 @@ class Tomography(Node):
 
         self.n_slice = layers_g.shape[0]
 
-        map_file = os.path.splitext(self.pcd_file)[0]
+        map_file = os.path.splitext(os.path.basename(self.pcd_file))[0]
         self.exportTomogram(np.stack((layers_t, trav_grad_x, trav_grad_y, layers_g, layers_c)), map_file)
 
         self.initROS()
@@ -211,10 +212,13 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--scene', type=str, help='Name of the scene. Available: [\'Spiral\', \'Building\', \'Plaza\']')
+    parser.add_argument('--pcd', type=str, default=None, help='Override PCD file name (relative to rsc/pcd/)')
     args = parser.parse_args()
 
     cfg = Config()
     scene_cfg = getattr(__import__('config'), 'Scene' + args.scene)
+    if args.pcd is not None:
+        scene_cfg.pcd.file_name = args.pcd
 
     rclpy.init()
     node = Tomography(cfg, scene_cfg)

@@ -407,6 +407,9 @@ def _parse_args():
     )
     parser.add_argument('--scene', type=str, default='Isaacsim',
                         help='Scene name, e.g. Isaacsim, Spiral, Building, Plaza, Openmind')
+    parser.add_argument('--pcd', type=str, default=None,
+                        help='Path to a PCD file, overriding the scene config\'s pcd.file_name. '
+                             'Absolute paths are used as-is; relative paths are resolved against rsc/pcd/.')
     parser.add_argument('--goal_layer', type=int, default=0)
     parser.add_argument('--goal_z', type=float, default=None)
     parser.add_argument('--start_layer', type=int, default=0)
@@ -426,13 +429,15 @@ def main():
     #    Loads the scene's PCD, computes the tomogram, exports the pickle, and
     #    starts publishing /layer_G_*, /layer_C_*, /tomogram for RViz2.
     Tomography, tomo_cfg, scene_cfg = _load_tomography_scene(args.scene)
+    if args.pcd is not None:
+        scene_cfg.pcd.file_name = args.pcd
     tomography_node = Tomography(tomo_cfg, scene_cfg)
 
     # 2. Planning step - equivalent to `python3 plan_global.py --scene <scene>
     #    --goal_layer <goal_layer>`. tomo_file is derived the same way
     #    tomography.py names its export, so it always matches what was just
     #    generated above (no separate scene->tomo_file table to go stale).
-    tomo_file = os.path.splitext(scene_cfg.pcd.file_name)[0]
+    tomo_file = os.path.splitext(os.path.basename(scene_cfg.pcd.file_name))[0]
     planner = TomogramPlanner(_build_planner_cfg())
     planner.loadTomogram(tomo_file)
     planner_node = CombinedPlannerNode(planner, args)
