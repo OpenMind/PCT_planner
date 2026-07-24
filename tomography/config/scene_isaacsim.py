@@ -21,4 +21,4 @@ class SceneIsaacsim():
     trav.standable_ratio = 0.10
     trav.cost_barrier = 50.0
     trav.safe_margin = 0.1
-    trav.inflation = 0.1
+    trav.inflation = 0.5

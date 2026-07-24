@@ -58,7 +58,12 @@ class GPMPOptimizer {
   Eigen::VectorXd opt_ceiling_;
   Eigen::MatrixXd trajectory_;
 
-  int sample_interval_ = 10;
+  // Lowered from 10: with a coarse interval, SubSamplePath collapses short
+  // discrete A* paths down to just start+end (num_segs <= 1), discarding
+  // every intermediate waypoint - including the ones tracing a detour
+  // around an obstacle - before the smoother ever runs. A smaller interval
+  // keeps enough via-points to preserve tight avoidance maneuvers.
+  int sample_interval_ = 1;
   int interpolate_num_ = 8;
   double safe_cost_margin_ = 10;
   int max_iterations_ = 100;
