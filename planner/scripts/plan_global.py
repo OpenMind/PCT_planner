@@ -32,7 +32,7 @@ parser = argparse.ArgumentParser(description='PCT global planner with live pose 
 parser.add_argument('--scene',        type=str,   default='Isaacsim',
                     help='Scene name (determines tomogram file). Available: Spiral, Building, Plaza, Isaacsim, Openmind')
 parser.add_argument('--tomo_file',    type=str,   default=None,
-                    help='Override tomogram filename (without .pickle). Default: derived from scene.')
+                    help='Override tomogram filename (without .npz). Default: derived from scene.')
 parser.add_argument('--goal_layer',   type=int,   default=0,
                     help='Goal layer index (0 = ground floor). Used when --goal_z is not set.')
 parser.add_argument('--goal_z',       type=float, default=None,

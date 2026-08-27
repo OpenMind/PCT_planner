@@ -2,7 +2,6 @@
 import os
 import sys
 import time
-import pickle
 import numpy as np
 import open3d as o3d
 
@@ -141,9 +140,8 @@ class Tomography(Node):
             'slice_h0': self.slice_h0,
             'slice_dh': self.slice_dh,
         }
-        file_name = map_file + '.pickle'
-        with open(self.export_dir + file_name, 'wb') as handle:
-            pickle.dump(data_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        file_name = map_file + '.npz'
+        np.savez_compressed(self.export_dir + file_name, **data_dict)
 
         self.get_logger().info('Tomogram exported: %s' % file_name)
 
