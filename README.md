@@ -166,12 +166,15 @@ python3 plan_global.py --scene Isaacsim --goal_z 1.5
 python3 planner_wrapper.py --scene Isaacsim --goal_layer 0
 rviz2 -d rsc/rviz/pct_ros_custom.rviz
 ```
+
+Tomograms are exported as `.npz` files. Regenerate existing tomograms after upgrading from older revisions; legacy pickle artifacts are intentionally not loaded.
+
 #### Arguments
 
 | Argument | Default | Description |
 |---|---|---|
 | `--scene` | `Isaacsim` | Scene name (selects tomogram file) |
-| `--tomo_file` | *(from scene)* | Override tomogram filename (without `.pickle`) |
+| `--tomo_file` | *(from scene)* | Override tomogram filename (without `.npz`) |
 | `--goal_layer` | `0` | Goal **layer index** (0 = ground floor) |
 | `--goal_z` | *(not set)* | Goal height in **meters** — auto-converted to layer, overrides `--goal_layer` |
 | `--start_layer` | `0` | Fallback start layer if TF Z is unavailable |

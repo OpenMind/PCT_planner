@@ -5,6 +5,7 @@
 *.npy
 *.pyc
 *.pickle
+*.npz
 *.so
 
 __pycache__/

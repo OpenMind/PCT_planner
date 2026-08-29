@@ -1,7 +1,8 @@
 import os
 import sys
-import pickle
 import argparse
+from pathlib import Path
+
 import numpy as np
 
 from utils import *
@@ -28,15 +29,15 @@ def _require_supported_numpy_version():
         )
 
 
-def _validate_tomogram_pickle_compat(tomo_path):
-    if np.lib.NumpyVersion(np.__version__) < '2.0.0':
-        with open(tomo_path, 'rb') as handle:
-            if b'numpy._core' in handle.read(4096):
-                raise RuntimeError(
-                    'Tomogram pickle was generated with NumPy 2.x and cannot '
-                    'be safely loaded under NumPy 1.x. Regenerate it with '
-                    'tomography.py after downgrading numpy in pct_env.'
-                )
+def _resolve_tomogram_path(tomo_dir, tomo_file):
+    """Resolve an NPZ artifact while preventing traversal outside tomo_dir."""
+    base_dir = Path(tomo_dir).resolve()
+    candidate = (base_dir / f"{tomo_file}.npz").resolve()
+    try:
+        candidate.relative_to(base_dir)
+    except ValueError as exc:
+        raise ValueError("Tomogram path must remain inside the configured directory") from exc
+    return candidate
 
 
 class TomogramPlanner(object):
@@ -62,18 +63,24 @@ class TomogramPlanner(object):
         self.cost_barrier = 50.0  # cells with trav >= cost_barrier are obstacles
 
     def loadTomogram(self, tomo_file):
-        tomo_path = self.tomo_dir + tomo_file + '.pickle'
-        _validate_tomogram_pickle_compat(tomo_path)
-        with open(tomo_path, 'rb') as handle:
-            data_dict = pickle.load(handle)
+        tomo_path = _resolve_tomogram_path(self.tomo_dir, tomo_file)
+        with np.load(tomo_path, allow_pickle=False) as data:
+            required_keys = {"data", "resolution", "center", "slice_h0", "slice_dh"}
+            missing_keys = required_keys.difference(data.files)
+            if missing_keys:
+                raise ValueError(
+                    f"Tomogram artifact is missing required fields: {sorted(missing_keys)}"
+                )
 
-            tomogram = np.asarray(data_dict['data'], dtype=np.float32)
+            tomogram = np.asarray(data["data"], dtype=np.float32)
+            if tomogram.ndim != 4 or tomogram.shape[0] < 5:
+                raise ValueError("Tomogram data must have shape (5, slices, width, height)")
 
-            self.resolution = float(data_dict['resolution'])
-            self.center = np.asarray(data_dict['center'], dtype=np.double)
+            self.resolution = float(data["resolution"])
+            self.center = np.asarray(data["center"], dtype=np.double)
             self.n_slice = tomogram.shape[1]
-            self.slice_h0 = float(data_dict['slice_h0'])
-            self.slice_dh = float(data_dict['slice_dh'])
+            self.slice_h0 = float(data["slice_h0"])
+            self.slice_dh = float(data["slice_dh"])
             self.map_dim = [tomogram.shape[2], tomogram.shape[3]]
             self.offset = np.array([int(self.map_dim[0] / 2), int(self.map_dim[1] / 2)], dtype=np.int32)
 
